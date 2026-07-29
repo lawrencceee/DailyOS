@@ -1,0 +1,56 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: dailyos-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-dailyos}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dailyos}
+      POSTGRES_DB: ${POSTGRES_DB:-dailyos}
+    ports:
+      - "5432:5432"
+    volumes:
+      - dailyos_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-dailyos}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: dailyos-backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-dailyos}:${POSTGRES_PASSWORD:-dailyos}@db:5432/${POSTGRES_DB:-dailyos}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    container_name: dailyos-frontend
+    restart: unless-stopped
+    # No VITE_API_BASE_URL here on purpose: leaving it unset lets the
+    # frontend infer the backend's address from whatever host loaded the
+    # page (see frontend/src/services/api.js), so the same container
+    # works from both localhost and a phone on the LAN. Set it explicitly
+    # only if the backend lives at a different host than the frontend.
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+
+volumes:
+  dailyos_pg_data:
