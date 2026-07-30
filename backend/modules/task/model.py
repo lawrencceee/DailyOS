@@ -57,6 +57,13 @@ class Task(Base):
     )
     deadline: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
+    # Tracks whether each reminder milestone has been sent, so the
+    # notification scheduler (modules/notification/) doesn't re-email
+    # the same task every time it checks (every 15 minutes) — only once
+    # deadline crosses each threshold. NULL means "not sent yet."
+    notified_day_before_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    notified_hour_before_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

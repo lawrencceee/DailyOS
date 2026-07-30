@@ -29,14 +29,21 @@ export default function useTaskFormState({ open, initialTask, initialDeadline })
         description: initialTask.description || "",
         status: initialTask.status || "todo",
         priority: initialTask.priority || "medium",
-        deadline: initialTask.deadline ? initialTask.deadline.slice(0, 16) : "",
+        deadline: initialTask.deadline
+          ? toDatetimeLocalValue(new Date(initialTask.deadline))
+          : "",
       });
     } else if (initialDeadline) {
       const d = new Date(initialDeadline);
+    
       if (d.getHours() === 0 && d.getMinutes() === 0) {
         d.setHours(9, 0, 0, 0);
       }
-      setForm({ ...emptyTask, deadline: toDatetimeLocalValue(d) });
+    
+      setForm({
+        ...emptyTask,
+        deadline: toDatetimeLocalValue(d),
+      });
     } else {
       setForm(emptyTask);
     }

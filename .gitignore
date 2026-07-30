@@ -1,38 +1,27 @@
-# Environment variables
-.env
-*.env
+# Dependencies
+node_modules/
+frontend/node_modules/
 
 # Python
 __pycache__/
-*.py[cod]
-*.pyo
-*.pyd
+*.pyc
+backend/venv/
+backend/.venv/
 
-# Virtual environments
-venv/
-.venv/
-env/
+# Build output
+frontend/dist/
+frontend/.vite/
 
-# Node
-node_modules/
-dist/
-build/
+# Environment files — .env holds local secrets/credentials and should
+# never be committed. .env.example (the template) is fine and IS tracked.
+.env
+backend/.env
+frontend/.env
 
-# Vite
-frontend/.env.local
-frontend/.env.production.local
-
-# Python IDE
+# OS/editor cruft
+.DS_Store
 .vscode/
 .idea/
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# Database
-*.sqlite
-*.db
 
 # Logs
 *.log

@@ -1,7 +1,10 @@
+import { useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Container, Box, Stack, Typography, Button, Tabs, Tab, useMediaQuery, useTheme } from "@mui/material";
+import { Container, Box, Stack, Typography, Button, IconButton, Tabs, Tab, useMediaQuery, useTheme } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import SettingsIcon from "@mui/icons-material/SettingsOutlined";
 import TaskForm from "../components/TaskForm.jsx";
+import SettingsDialog from "../components/SettingsDialog.jsx";
 import { useTasksContext } from "../context/TasksContext.jsx";
 
 const TODAY = new Date().toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
@@ -30,6 +33,7 @@ export default function AppLayout() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const { formOpen, editingTask, initialDeadline, openCreate, closeForm, submitForm } = useTasksContext();
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const activeTab = TABS.some((t) => t.path === location.pathname) ? location.pathname : "/";
 
@@ -51,14 +55,23 @@ export default function AppLayout() {
           sx={{ mt: 0.5, mb: 2 }}
         >
           <Typography variant="h4">Your tasks</Typography>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => openCreate()}
-            sx={{ width: { xs: "100%", sm: "auto" }, py: { xs: 1.25, sm: 1 } }}
-          >
-            New task
-          </Button>
+          <Stack direction="row" spacing={1} alignItems="center">
+            <IconButton
+              onClick={() => setSettingsOpen(true)}
+              aria-label="reminder settings"
+              sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2 }}
+            >
+              <SettingsIcon fontSize="small" />
+            </IconButton>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => openCreate()}
+              sx={{ flexGrow: { xs: 1, sm: 0 }, py: { xs: 1.25, sm: 1 } }}
+            >
+              New task
+            </Button>
+          </Stack>
         </Stack>
 
         <Tabs
@@ -87,6 +100,8 @@ export default function AppLayout() {
           initialTask={editingTask}
           initialDeadline={initialDeadline}
         />
+
+        <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
       </Container>
     </Box>
   );

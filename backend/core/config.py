@@ -31,11 +31,31 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql+psycopg2://dailyos:dailyos@db:5432/dailyos"
 
+    # Notification module (modules/notification/) — sends a reminder
+    # email when a task's deadline is ~1 day and ~1 hour away. Empty
+    # strings by default so the scheduler can detect "not configured yet"
+    # and skip sending rather than crashing on missing credentials; see
+    # backend/.env.example for how to fill these in with a real provider.
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_username: str = ""
+    smtp_password: str = ""
+    alert_email_from: str = ""
+    alert_email_to: str = ""
+    reminder_check_interval_minutes: int = 10
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     @property
     def cors_origin_list(self) -> list[str]:
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+
+    @property
+    def email_configured(self) -> bool:
+        # Recipient is no longer required here — it's resolved at send
+        # time from the settings table (with alert_email_to as a
+        # fallback default if the settings row has nothing set yet).
+        return bool(self.smtp_host and self.smtp_username and self.smtp_password)
 
 
 @lru_cache

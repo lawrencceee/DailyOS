@@ -13,6 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from core.config import settings
 from core.logging import configure_logging
 from api.v1.router import api_router
+from modules.notification.scheduler import start_scheduler, stop_scheduler
 
 configure_logging()
 logger = logging.getLogger(__name__)
@@ -45,3 +46,9 @@ def health_check():
 @app.on_event("startup")
 def on_startup():
     logger.info("%s starting up in '%s' mode", settings.app_name, settings.app_env)
+    start_scheduler()
+
+
+@app.on_event("shutdown")
+def on_shutdown():
+    stop_scheduler()

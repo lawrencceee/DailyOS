@@ -16,6 +16,7 @@ from database.base import Base
 
 # Import all module models here so Base.metadata knows about them.
 from modules.task import model as task_model  # noqa: F401
+from modules.settings import model as settings_model  # noqa: F401
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.database_url)
