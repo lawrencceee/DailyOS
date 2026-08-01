@@ -28,16 +28,8 @@ def upgrade() -> None:
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
         sa.Column("title", sa.String(length=200), nullable=False),
         sa.Column("description", sa.Text(), nullable=True),
-        sa.Column(
-            "status",
-            postgresql.ENUM("todo", "in_progress", "done", name="task_status", create_type=False),
-            nullable=False,
-        ),
-        sa.Column(
-            "priority",
-            postgresql.ENUM("low", "medium", "high", name="task_priority", create_type=False),
-            nullable=False,
-        ),
+        sa.Column("status", postgresql.ENUM("todo", "in_progress", "done", name="task_status", create_type=False), nullable=False),
+        sa.Column("priority", postgresql.ENUM("low", "medium", "high", name="task_priority", create_type=False), nullable=False),
         sa.Column("deadline", sa.DateTime(timezone=True), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),

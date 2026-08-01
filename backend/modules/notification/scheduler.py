@@ -1,17 +1,3 @@
-"""
-Wires the reminder check to run on a schedule inside the same process
-as the FastAPI app.
-
-Uses APScheduler's BackgroundScheduler: no new infrastructure (no
-message queue, no separate worker service) — appropriate for a
-single-instance personal project. Worth knowing: if this app ever ran
-as multiple replicas, each instance would run its own scheduler
-independently and you'd get duplicate emails. Splitting this into a
-separate scheduled job (e.g. a Render Cron Job) is the fix if/when
-that becomes a real concern — this project's own spec already
-earmarks that class of infrastructure ("message queues... added in
-later iterations").
-"""
 import logging
 
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -30,8 +16,6 @@ def _run_reminder_check() -> None:
     try:
         ReminderService(db).check_and_send_reminders()
     except Exception:
-        # A failed check shouldn't crash the scheduler thread or the
-        # app — log it and try again on the next scheduled run.
         logger.exception("Reminder check failed")
     finally:
         db.close()

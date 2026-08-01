@@ -1,10 +1,5 @@
-"""
-Repository layer for AppSettings.
+import uuid
 
-Since this is a single-row table, get_or_create() is the only read
-path — there's no listing or filtering, just "the one settings row,"
-created on first access rather than requiring a separate seed step.
-"""
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -15,10 +10,10 @@ class SettingsRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def get_or_create(self) -> AppSettings:
-        row = self.db.scalars(select(AppSettings)).first()
+    def get_or_create(self, user_id: uuid.UUID) -> AppSettings:
+        row = self.db.scalars(select(AppSettings).where(AppSettings.user_id == user_id)).first()
         if row is None:
-            row = AppSettings()
+            row = AppSettings(user_id=user_id)
             self.db.add(row)
             self.db.commit()
             self.db.refresh(row)
@@ -29,3 +24,7 @@ class SettingsRepository:
         self.db.commit()
         self.db.refresh(row)
         return row
+
+    def get_for_user(self, user_id: uuid.UUID) -> AppSettings | None:
+        """Read-only lookup used by the notification scheduler — doesn't create a row if none exists."""
+        return self.db.scalars(select(AppSettings).where(AppSettings.user_id == user_id)).first()

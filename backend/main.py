@@ -1,10 +1,3 @@
-"""
-Application entrypoint.
-
-Wires together config, logging, CORS, the versioned API router, and a
-health check. Business logic never lives here — this file only builds
-and configures the FastAPI app object.
-"""
 import logging
 
 from fastapi import FastAPI
@@ -20,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title=settings.app_name,
-    description="DailyOS backend API — modular monolith, v1 (Task module only).",
+    description="DailyOS backend API — modular monolith.",
     version="1.0.0",
     docs_url="/docs",
     openapi_url="/openapi.json",

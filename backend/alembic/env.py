@@ -1,10 +1,3 @@
-"""
-Alembic environment file, wired to DailyOS's own settings and Base
-metadata so `alembic revision --autogenerate` picks up every model
-across every module automatically — no manual import list to maintain
-per-module beyond the one import below (extend this import as new
-modules add models).
-"""
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config, pool
@@ -15,6 +8,7 @@ from core.config import settings
 from database.base import Base
 
 # Import all module models here so Base.metadata knows about them.
+from modules.user import model as user_model  # noqa: F401
 from modules.task import model as task_model  # noqa: F401
 from modules.settings import model as settings_model  # noqa: F401
 

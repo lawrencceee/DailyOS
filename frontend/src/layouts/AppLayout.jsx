@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Container, Box, Stack, Typography, Button, IconButton, Tabs, Tab, useMediaQuery, useTheme } from "@mui/material";
+import { Container, Box, Stack, Typography, Button, IconButton } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import SettingsIcon from "@mui/icons-material/SettingsOutlined";
+import LogoutIcon from "@mui/icons-material/LogoutOutlined";
 import TaskForm from "../components/TaskForm.jsx";
 import SettingsDialog from "../components/SettingsDialog.jsx";
 import { useTasksContext } from "../context/TasksContext.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
 
 const TODAY = new Date().toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
 
@@ -15,44 +17,45 @@ const TABS = [
   { path: "/calendar", label: "Calendar" },
 ];
 
-/**
- * Shared chrome for every view: the DailyOS eyebrow, the "New task"
- * button, the List/Week/Calendar tab switcher, and the create/edit
- * modal itself. Living here (once) rather than in each page means
- * "New task" and the modal behave identically everywhere, and adding
- * a fourth view later is one line in TABS plus one <Route>.
- *
- * Mobile: title and button stack instead of squeezing onto one row,
- * the button becomes full-width (a bigger, easier thumb target than a
- * small trailing button), and tabs fill the width equally rather than
- * left-aligning with empty space to the right.
- */
 export default function AppLayout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const { formOpen, editingTask, initialDeadline, openCreate, closeForm, submitForm } = useTasksContext();
+  const { user, logout } = useAuth();
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   const activeTab = TABS.some((t) => t.path === location.pathname) ? location.pathname : "/";
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
-      <Container maxWidth="md" sx={{ py: { xs: 3, sm: 6 }, px: { xs: 2, sm: 3 } }}>
-        <Typography
-          variant="overline"
-          sx={{ fontFamily: '"IBM Plex Mono", monospace', color: "text.secondary", letterSpacing: "0.08em" }}
-        >
-          DailyOS · {TODAY}
-        </Typography>
+      <Container maxWidth="md" sx={{ py: { xs: 4, sm: 6 } }}>
+        <Stack direction="row" justifyContent="space-between" alignItems="center">
+          <Typography
+            variant="overline"
+            sx={{ fontFamily: '"IBM Plex Mono", monospace', color: "text.secondary", letterSpacing: "0.08em" }}
+          >
+            DailyOS · {TODAY}
+          </Typography>
+          {user && (
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Typography
+                sx={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: "0.75rem", color: "text.secondary" }}
+              >
+                {user.email}
+              </Typography>
+              <IconButton size="small" onClick={logout} aria-label="log out">
+                <LogoutIcon fontSize="small" />
+              </IconButton>
+            </Stack>
+          )}
+        </Stack>
 
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          spacing={{ xs: 1.5, sm: 2 }}
+        <Box
+          display="flex"
+          flexDirection={{ xs: "column", sm: "row" }}
           justifyContent="space-between"
           alignItems={{ xs: "stretch", sm: "flex-end" }}
-          sx={{ mt: 0.5, mb: 2 }}
+          sx={{ mt: 0.5, mb: 2, gap: 1.5 }}
         >
           <Typography variant="h4">Your tasks</Typography>
           <Stack direction="row" spacing={1} alignItems="center">
@@ -72,24 +75,54 @@ export default function AppLayout() {
               New task
             </Button>
           </Stack>
-        </Stack>
+        </Box>
 
-        <Tabs
-          value={activeTab}
-          onChange={(_, value) => navigate(value)}
-          variant={isMobile ? "fullWidth" : "standard"}
+        {/*
+          A rounded segmented control instead of MUI's default
+          underline Tabs — the underline style was the one place in the
+          app that didn't match the rounded-pill language already used
+          by every button and chip elsewhere.
+        */}
+        <Box
           sx={{
+            display: "flex",
+            width: { xs: "100%", sm: "fit-content" },
             mb: 3,
-            minHeight: 40,
-            borderBottom: "1px solid",
+            p: 0.5,
+            gap: 0.5,
+            borderRadius: 999,
+            border: "1px solid",
             borderColor: "divider",
-            "& .MuiTab-root": { minHeight: 40, textTransform: "none", fontWeight: 600 },
+            bgcolor: "background.paper",
           }}
         >
-          {TABS.map((tab) => (
-            <Tab key={tab.path} value={tab.path} label={tab.label} />
-          ))}
-        </Tabs>
+          {TABS.map((tab) => {
+            const selected = activeTab === tab.path;
+            return (
+              <Box
+                key={tab.path}
+                component="button"
+                onClick={() => navigate(tab.path)}
+                sx={{
+                  flex: { xs: 1, sm: "0 0 auto" },
+                  border: "none",
+                  borderRadius: 999,
+                  px: 2.5,
+                  py: 0.85,
+                  fontFamily: "inherit",
+                  fontSize: "0.875rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  bgcolor: selected ? "primary.main" : "transparent",
+                  color: selected ? "primary.contrastText" : "text.secondary",
+                  transition: "background-color .15s ease, color .15s ease",
+                }}
+              >
+                {tab.label}
+              </Box>
+            );
+          })}
+        </Box>
 
         <Outlet />
 

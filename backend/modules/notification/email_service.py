@@ -1,12 +1,3 @@
-"""
-Email delivery for the notification module.
-
-This is the only file that knows *how* an email actually gets sent
-(SMTP host/port/auth). Everything else in this module works with plain
-subject/body strings and calls send_email() — if you later swap SMTP
-for a provider API (Resend, SendGrid, Postmark), this is the only file
-that changes.
-"""
 import logging
 import smtplib
 from email.mime.text import MIMEText
@@ -19,11 +10,8 @@ logger = logging.getLogger(__name__)
 def send_email(subject: str, body: str, to_email: str | None = None) -> None:
     recipient = to_email or settings.alert_email_to
     if not settings.email_configured or not recipient:
-        # Fails loudly in logs rather than crashing the scheduler loop —
-        # missing email config shouldn't take down the whole app, just
-        # mean reminders silently don't send until it's configured.
         logger.warning(
-            "Email not sent (SMTP not configured, or no recipient set via app settings / ALERT_EMAIL_TO): %s",
+            "Email not sent (SMTP not configured, or no recipient set): %s",
             subject,
         )
         return

@@ -6,11 +6,8 @@ import { useTasksContext } from "../context/TasksContext.jsx";
 import { STATUS_META, STATUS_ORDER } from "../constants/taskMeta.js";
 
 export default function ListView() {
-  const { tasks, loading, error, setError, openEdit, deleteTask, openCreate } = useTasksContext();
+  const { tasks, loading, error, setError, openEdit, deleteTask, updateTask, openCreate } = useTasksContext();
 
-  // The one signature element: a system-style status readout,
-  // "3 To Do · 1 In Progress · 2 Done", summarizing the same data
-  // the cards below show.
   const statusLine = useMemo(() => {
     const counts = tasks.reduce((acc, task) => {
       acc[task.status] = (acc[task.status] || 0) + 1;
@@ -21,22 +18,25 @@ export default function ListView() {
       .join(" · ");
   }, [tasks]);
 
+  // Sends only { status }, not the whole form — the backend's partial-
+  // update semantics (exclude_unset) mean description/priority/deadline
+  // are left untouched, so this can't accidentally clobber other fields.
+  const handleToggleDone = (task) => {
+    updateTask(task.id, { status: task.status === "done" ? "todo" : "done" });
+  };
+
   return (
     <Box>
       {!loading && tasks.length > 0 && (
-        <Typography
-          sx={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: "0.8rem", color: "text.secondary", mb: 2 }}
-        >
+        <Typography sx={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: "0.8rem", color: "text.secondary", mb: 2 }}>
           {statusLine}
         </Typography>
       )}
-
       {error && (
         <Alert severity="error" variant="outlined" sx={{ mb: 2 }} onClose={() => setError(null)}>
           {error}
         </Alert>
       )}
-
       {loading ? (
         <Box display="flex" justifyContent="center" sx={{ mt: 6 }}>
           <CircularProgress size={28} sx={{ color: "primary.main" }} />
@@ -51,7 +51,7 @@ export default function ListView() {
           </Button>
         </Box>
       ) : (
-        <TaskList tasks={tasks} onEdit={openEdit} onDelete={deleteTask} />
+        <TaskList tasks={tasks} onEdit={openEdit} onDelete={deleteTask} onToggleDone={handleToggleDone} />
       )}
     </Box>
   );

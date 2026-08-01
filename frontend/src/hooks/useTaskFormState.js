@@ -9,16 +9,6 @@ const emptyTask = {
   deadline: "",
 };
 
-/**
- * Owns TaskForm's state: what's in each field, how it gets pre-filled
- * (editing an existing task, or a deadline pre-filled from a Week/
- * Calendar day-click), and how the final payload is built for submit.
- *
- * This is what TaskFormDesktop.jsx and TaskFormMobile.jsx both call —
- * the two views render completely different markup, but neither needs
- * its own copy of "how does the form behave," so that logic lives here
- * exactly once.
- */
 export default function useTaskFormState({ open, initialTask, initialDeadline }) {
   const [form, setForm] = useState(emptyTask);
 
@@ -29,21 +19,20 @@ export default function useTaskFormState({ open, initialTask, initialDeadline })
         description: initialTask.description || "",
         status: initialTask.status || "todo",
         priority: initialTask.priority || "medium",
-        deadline: initialTask.deadline
-          ? toDatetimeLocalValue(new Date(initialTask.deadline))
-          : "",
+        // initialTask.deadline is a UTC ISO string from the API.
+        // Parsing it into a Date and reading it back via local-time
+        // getters (inside toDatetimeLocalValue) correctly converts it
+        // to the browser's local wall-clock time — slicing the raw
+        // string instead silently keeps the UTC hour, drifting the
+        // displayed time by the user's timezone offset.
+        deadline: initialTask.deadline ? toDatetimeLocalValue(new Date(initialTask.deadline)) : "",
       });
     } else if (initialDeadline) {
       const d = new Date(initialDeadline);
-    
       if (d.getHours() === 0 && d.getMinutes() === 0) {
         d.setHours(9, 0, 0, 0);
       }
-    
-      setForm({
-        ...emptyTask,
-        deadline: toDatetimeLocalValue(d),
-      });
+      setForm({ ...emptyTask, deadline: toDatetimeLocalValue(d) });
     } else {
       setForm(emptyTask);
     }

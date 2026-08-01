@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
   db:
     image: postgres:16-alpine
@@ -37,11 +39,6 @@ services:
     build: ./frontend
     container_name: dailyos-frontend
     restart: unless-stopped
-    # No VITE_API_BASE_URL here on purpose: leaving it unset lets the
-    # frontend infer the backend's address from whatever host loaded the
-    # page (see frontend/src/services/api.js), so the same container
-    # works from both localhost and a phone on the LAN. Set it explicitly
-    # only if the backend lives at a different host than the frontend.
     ports:
       - "5173:5173"
     volumes:

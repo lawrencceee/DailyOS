@@ -1,27 +1,15 @@
-# Dependencies
 node_modules/
 frontend/node_modules/
-
-# Python
+frontend/dist/
+frontend/.vite/
 __pycache__/
 *.pyc
 backend/venv/
 backend/.venv/
-
-# Build output
-frontend/dist/
-frontend/.vite/
-
-# Environment files — .env holds local secrets/credentials and should
-# never be committed. .env.example (the template) is fine and IS tracked.
 .env
 backend/.env
 frontend/.env
-
-# OS/editor cruft
 .DS_Store
 .vscode/
 .idea/
-
-# Logs
 *.log

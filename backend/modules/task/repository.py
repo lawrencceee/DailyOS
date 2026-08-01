@@ -1,11 +1,3 @@
-"""
-Repository layer for Task.
-
-The ONLY place in the codebase that writes SQLAlchemy queries against
-the Task table. It knows nothing about HTTP, status codes, or business
-rules — it just does CRUD against a Session and returns ORM objects
-(or None). The service layer is the only caller.
-"""
 import uuid
 from datetime import datetime
 
@@ -20,18 +12,29 @@ class TaskRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def get_all(self, skip: int = 0, limit: int = 100) -> list[Task]:
-        stmt = select(Task).order_by(Task.created_at.desc()).offset(skip).limit(limit)
+    def get_all(self, user_id: uuid.UUID, skip: int = 0, limit: int = 100) -> list[Task]:
+        stmt = (
+            select(Task)
+            .where(Task.user_id == user_id)
+            .order_by(Task.created_at.desc())
+            .offset(skip)
+            .limit(limit)
+        )
         return list(self.db.scalars(stmt).all())
 
-    def get_by_id(self, task_id: uuid.UUID) -> Task | None:
-        return self.db.get(Task, task_id)
+    def get_by_id(self, user_id: uuid.UUID, task_id: uuid.UUID) -> Task | None:
+        # Filtering by user_id here (not just task_id) is what actually
+        # prevents one user from loading another's task by id — a 404
+        # is returned either way, so there's no way to distinguish
+        # "doesn't exist" from "exists but isn't yours."
+        stmt = select(Task).where(Task.id == task_id, Task.user_id == user_id)
+        return self.db.scalars(stmt).first()
 
     def get_with_deadline_in_range(self, start: datetime, end: datetime) -> list[Task]:
         """
-        Tasks with a deadline in [start, end], excluding done tasks —
-        used by the notification module to find candidates for a
-        reminder without loading every task in the table.
+        Used by the notification scheduler, which runs across ALL
+        users' tasks (not scoped to one user_id) — it needs the task's
+        user_id itself to look up which user's alert email to use.
         """
         stmt = select(Task).where(
             Task.deadline.isnot(None),
@@ -41,8 +44,8 @@ class TaskRepository:
         )
         return list(self.db.scalars(stmt).all())
 
-    def create(self, data: TaskCreate) -> Task:
-        task = Task(**data.model_dump())
+    def create(self, user_id: uuid.UUID, data: TaskCreate) -> Task:
+        task = Task(user_id=user_id, **data.model_dump())
         self.db.add(task)
         self.db.commit()
         self.db.refresh(task)
@@ -61,6 +64,5 @@ class TaskRepository:
         self.db.commit()
 
     def mark_notified(self, task: Task, field: str, when: datetime) -> None:
-        """Sets notified_day_before_at or notified_hour_before_at and commits."""
         setattr(task, field, when)
         self.db.commit()

@@ -9,11 +9,6 @@ import { startOfWeek, addDays, isSameDay, formatWeekRangeLabel } from "../utils/
 
 const DAY_LABEL = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-/**
- * Tasks are grouped by matching their deadline's calendar day against
- * each column — a task with no deadline can't appear in a week grid,
- * so those are listed separately underneath instead of silently hidden.
- */
 export default function WeekView() {
   const { tasks, openEdit, openCreate } = useTasksContext();
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
@@ -95,27 +90,17 @@ export default function WeekView() {
 
       {unscheduled.length > 0 && (
         <Box sx={{ mt: 3 }}>
-          <Typography
-            sx={{
-              fontFamily: '"IBM Plex Mono", monospace',
-              fontSize: "0.75rem",
-              color: "text.secondary",
-              mb: 1,
-            }}
-          >
+          <Typography sx={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: "0.75rem", color: "text.secondary", mb: 1 }}>
             Unscheduled
           </Typography>
-          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+          <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: "wrap" }}>
             {unscheduled.map((task) => (
               <Chip
                 key={task.id}
                 label={task.title}
                 size="small"
                 onClick={() => openEdit(task)}
-                sx={{
-                  borderLeft: `3px solid ${PRIORITY_ACCENT[task.priority]}`,
-                  ...STATUS_META[task.status],
-                }}
+                sx={{ borderLeft: `3px solid ${PRIORITY_ACCENT[task.priority]}`, ...STATUS_META[task.status] }}
               />
             ))}
           </Stack>

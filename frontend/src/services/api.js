@@ -1,25 +1,38 @@
 import axios from "axios";
+import { TOKEN_STORAGE_KEY } from "../constants/auth.js";
 
-/**
- * Single axios instance shared by every *Service module. Base URL and
- * interceptors (e.g. auth headers, once v2 adds them) are configured
- * once here rather than repeated per-service.
- *
- * If VITE_API_BASE_URL isn't explicitly set, the backend's address is
- * inferred from whatever host the page itself was loaded from. This is
- * what makes the same build work whether opened as
- * http://localhost:5173 (desktop, same machine as Docker) or
- * http://192.168.x.x:5173 (a phone on the same Wi-Fi) — hardcoding
- * "localhost" only ever works on the machine actually running Docker,
- * since "localhost" always means the current device, never the server.
- */
 const inferredBaseURL = `${window.location.protocol}//${window.location.hostname}:8000/api/v1`;
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || inferredBaseURL,
-  headers: {
-    "Content-Type": "application/json",
-  },
+  headers: { "Content-Type": "application/json" },
 });
+
+// Attach the JWT to every request, if we have one. This is the one
+// place auth needed to touch the request pipeline — every other
+// *Service file built on top of `api` gets this for free.
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem(TOKEN_STORAGE_KEY);
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// A 401 means the token is missing/invalid/expired — force back to
+// the login page rather than let the app sit in a broken half-authed
+// state showing stale data or repeatedly failing requests.
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem(TOKEN_STORAGE_KEY);
+      if (window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 export default api;

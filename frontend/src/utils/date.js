@@ -1,9 +1,3 @@
-/**
- * Minimal date-grid helpers for the Week and Calendar views. Hand-rolled
- * rather than pulling in a date library — the logic needed here (week
- * start, month grid, day comparison) is small enough to keep visible.
- */
-
 export function startOfDay(date) {
   const d = new Date(date);
   d.setHours(0, 0, 0, 0);
@@ -20,7 +14,6 @@ export function addDays(date, amount) {
   return d;
 }
 
-/** Monday-based week start (day 0 = Sunday in JS, so Sunday shifts back 6). */
 export function startOfWeek(date) {
   const d = startOfDay(date);
   const day = d.getDay();
@@ -32,7 +25,6 @@ export function startOfMonth(date) {
   return new Date(date.getFullYear(), date.getMonth(), 1);
 }
 
-/** Returns a 6x7 grid of Dates covering the full weeks touching this month. */
 export function getMonthGrid(anchorDate) {
   const gridStart = startOfWeek(startOfMonth(anchorDate));
   const weeks = [];
@@ -59,14 +51,12 @@ export function formatWeekRangeLabel(weekStart) {
   return `${start} – ${end}`;
 }
 
-/** Returns a new Date with the same day as `date` but the given hour/minute. */
 export function atHour(date, hour, minute = 0) {
   const d = new Date(date);
   d.setHours(hour, minute, 0, 0);
   return d;
 }
 
-/** Formats a Date as the value a <input type="datetime-local"> expects. */
 export function toDatetimeLocalValue(date) {
   const pad = (n) => String(n).padStart(2, "0");
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(
@@ -74,7 +64,6 @@ export function toDatetimeLocalValue(date) {
   )}:${pad(date.getMinutes())}`;
 }
 
-/** Formats a datetime-local string ("2026-07-28T09:00") for display, e.g. "Tue, Jul 28 · 9:00 AM". */
 export function formatDeadlineDisplay(datetimeLocalValue) {
   if (!datetimeLocalValue) return "";
   const d = new Date(datetimeLocalValue);

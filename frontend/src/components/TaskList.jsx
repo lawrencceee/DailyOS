@@ -1,7 +1,7 @@
 import { Stack, Typography } from "@mui/material";
 import TaskItem from "./TaskItem.jsx";
 
-export default function TaskList({ tasks, onEdit, onDelete }) {
+export default function TaskList({ tasks, onEdit, onDelete, onToggleDone }) {
   if (tasks.length === 0) {
     return (
       <Typography color="text.secondary" sx={{ mt: 4, textAlign: "center" }}>
@@ -11,9 +11,9 @@ export default function TaskList({ tasks, onEdit, onDelete }) {
   }
 
   return (
-    <Stack spacing={2} sx={{ mt: 2 }}>
+    <Stack spacing={1.5} sx={{ mt: 2 }}>
       {tasks.map((task) => (
-        <TaskItem key={task.id} task={task} onEdit={onEdit} onDelete={onDelete} />
+        <TaskItem key={task.id} task={task} onEdit={onEdit} onDelete={onDelete} onToggleDone={onToggleDone} />
       ))}
     </Stack>
   );

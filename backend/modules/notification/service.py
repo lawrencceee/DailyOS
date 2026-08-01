@@ -1,10 +1,13 @@
 """
 Business logic for deadline reminders.
 
-Runs on a schedule (see scheduler.py), not in response to a request —
-checks which tasks have crossed the "1 day left" or "1 hour left"
-threshold since the last check, and sends an email for each one exactly
-once (tracked via Task.notified_day_before_at / notified_hour_before_at).
+Runs on a schedule (see scheduler.py), across ALL users' tasks in one
+pass — unlike the Task API (which is scoped per-user via
+get_current_user), this background job legitimately needs to see every
+user's tasks, since it has to check all of them regardless of who owns
+which. For each task, the recipient is resolved from THAT task's
+owner's settings row, not a single shared address — that's the piece
+that changed when settings became per-user.
 """
 import logging
 from datetime import datetime, timedelta, timezone
@@ -28,16 +31,7 @@ class ReminderService:
         self.settings_repository = SettingsRepository(db)
 
     def check_and_send_reminders(self) -> None:
-        alert_email = self._resolve_alert_email()
-        if not alert_email:
-            logger.info("No alert email configured yet (settings table empty and no ALERT_EMAIL_TO) — skipping check")
-            return
-
         now = datetime.now(timezone.utc)
-        # Window tolerance = how often the scheduler runs. A task
-        # "crosses" the 1-day threshold sometime between this check and
-        # the previous one (~15 minutes ago), so the window is what
-        # catches it without needing to run continuously.
         window = timedelta(minutes=settings.reminder_check_interval_minutes)
 
         candidates = self.repository.get_with_deadline_in_range(now, now + ONE_DAY + window)
@@ -46,24 +40,26 @@ class ReminderService:
             remaining = task.deadline - now
 
             if task.notified_day_before_at is None and self._crossed(remaining, ONE_DAY, window):
-                self._remind(task, "1 day", "notified_day_before_at", now, alert_email)
+                self._maybe_remind(task, "1 day", "notified_day_before_at", now)
 
             if task.notified_hour_before_at is None and self._crossed(remaining, ONE_HOUR, window):
-                self._remind(task, "1 hour", "notified_hour_before_at", now, alert_email)
-
-    def _resolve_alert_email(self) -> str | None:
-        # The settings-table value (set via the UI) takes precedence;
-        # ALERT_EMAIL_TO is only a fallback for before anyone's visited
-        # the settings dialog yet.
-        row = self.settings_repository.get_or_create()
-        return row.alert_email or settings.alert_email_to or None
+                self._maybe_remind(task, "1 hour", "notified_hour_before_at", now)
 
     @staticmethod
     def _crossed(remaining: timedelta, threshold: timedelta, window: timedelta) -> bool:
-        """True if `remaining` just dropped to/below `threshold` within the last check window."""
         return threshold - window <= remaining <= threshold
 
-    def _remind(self, task, label: str, field: str, now: datetime, alert_email: str) -> None:
+    def _maybe_remind(self, task, label: str, field: str, now: datetime) -> None:
+        # Resolved per task-owner, not globally — this is the one place
+        # that changed when settings became per-user. A user who hasn't
+        # set an alert email yet simply doesn't get reminders (no
+        # fallback to a shared address, since that address would belong
+        # to someone else entirely in a multi-user app).
+        user_settings = self.settings_repository.get_for_user(task.user_id)
+        alert_email = user_settings.alert_email if user_settings else None
+        if not alert_email:
+            return
+
         send_email(
             subject=f'DailyOS reminder: "{task.title}" is due in {label}',
             body=(
@@ -75,4 +71,4 @@ class ReminderService:
             to_email=alert_email,
         )
         self.repository.mark_notified(task, field, now)
-        logger.info("Sent %s reminder for task %s (%s)", label, task.id, task.title)
+        logger.info("Sent %s reminder for task %s (user %s)", label, task.id, task.user_id)

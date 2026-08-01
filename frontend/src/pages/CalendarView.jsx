@@ -11,14 +11,6 @@ const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const DAY_LABELS_SHORT = ["M", "T", "W", "T", "F", "S", "S"];
 const MAX_VISIBLE_PER_DAY = 2;
 
-/**
- * A month grid is always 7 columns — that doesn't change on phone —
- * but 7 columns of truncated title text on a ~360px screen leaves so
- * little width per cell that the text is unreadable rather than just
- * short. So on phone, cells show compact priority-colored dots (title
- * omitted); tapping a day still reveals full titles in the panel below
- * the grid, which is where mobile users actually read task names.
- */
 export default function CalendarView() {
   const { tasks, openEdit, openCreate } = useTasksContext();
   const theme = useTheme();
@@ -39,14 +31,7 @@ export default function CalendarView() {
           {formatMonthLabel(anchor)}
         </Typography>
         <Stack direction="row" spacing={0.5}>
-          <IconButton
-            size="small"
-            onClick={() => {
-              setAnchor(startOfMonth(new Date()));
-              setSelectedDay(null);
-            }}
-            aria-label="jump to this month"
-          >
+          <IconButton size="small" onClick={() => { setAnchor(startOfMonth(new Date())); setSelectedDay(null); }} aria-label="jump to this month">
             <TodayIcon fontSize="small" />
           </IconButton>
           <IconButton size="small" onClick={() => goToMonth(-1)} aria-label="previous month">
@@ -60,11 +45,7 @@ export default function CalendarView() {
 
       <Box sx={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 0.5, mb: 0.5 }}>
         {(isMobile ? DAY_LABELS_SHORT : DAY_LABELS).map((label, i) => (
-          <Typography
-            key={`${label}-${i}`}
-            align="center"
-            sx={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: "0.7rem", color: "text.secondary" }}
-          >
+          <Typography key={`${label}-${i}`} align="center" sx={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: "0.7rem", color: "text.secondary" }}>
             {label}
           </Typography>
         ))}
@@ -110,15 +91,7 @@ export default function CalendarView() {
                 dayTasks.length > 0 && (
                   <Stack direction="row" spacing={0.4} sx={{ mt: 0.4, flexWrap: "wrap" }}>
                     {dayTasks.slice(0, 4).map((task) => (
-                      <Box
-                        key={task.id}
-                        sx={{
-                          width: 6,
-                          height: 6,
-                          borderRadius: "50%",
-                          bgcolor: PRIORITY_ACCENT[task.priority],
-                        }}
-                      />
+                      <Box key={task.id} sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: PRIORITY_ACCENT[task.priority] }} />
                     ))}
                   </Stack>
                 )
@@ -127,10 +100,7 @@ export default function CalendarView() {
                   {visibleTasks.map((task) => (
                     <Box
                       key={task.id}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openEdit(task);
-                      }}
+                      onClick={(e) => { e.stopPropagation(); openEdit(task); }}
                       title={task.title}
                       sx={{
                         fontSize: "0.62rem",
@@ -151,14 +121,7 @@ export default function CalendarView() {
                     </Box>
                   ))}
                   {hiddenCount > 0 && (
-                    <Typography
-                      sx={{
-                        fontFamily: '"IBM Plex Mono", monospace',
-                        fontSize: "0.6rem",
-                        color: "text.secondary",
-                        px: 0.5,
-                      }}
-                    >
+                    <Typography sx={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: "0.6rem", color: "text.secondary", px: 0.5 }}>
                       +{hiddenCount} more
                     </Typography>
                   )}
@@ -175,10 +138,7 @@ export default function CalendarView() {
             <Typography sx={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: "0.8rem", color: "text.secondary" }}>
               {selectedDay.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" })}
             </Typography>
-            <Typography
-              onClick={() => openCreate(selectedDay)}
-              sx={{ fontSize: "0.8rem", color: "primary.main", cursor: "pointer", fontWeight: 600 }}
-            >
+            <Typography onClick={() => openCreate(selectedDay)} sx={{ fontSize: "0.8rem", color: "primary.main", cursor: "pointer", fontWeight: 600 }}>
               + Add task
             </Typography>
           </Stack>
@@ -189,16 +149,7 @@ export default function CalendarView() {
               </Typography>
             ) : (
               selectedTasks.map((task) => (
-                <Paper
-                  key={task.id}
-                  variant="outlined"
-                  onClick={() => openEdit(task)}
-                  sx={{
-                    p: 1,
-                    cursor: "pointer",
-                    borderLeft: `4px solid ${PRIORITY_ACCENT[task.priority]}`,
-                  }}
-                >
+                <Paper key={task.id} variant="outlined" onClick={() => openEdit(task)} sx={{ p: 1, cursor: "pointer", borderLeft: `4px solid ${PRIORITY_ACCENT[task.priority]}` }}>
                   <Typography sx={{ fontWeight: 600 }}>{task.title}</Typography>
                 </Paper>
               ))

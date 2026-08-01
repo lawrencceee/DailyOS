@@ -1,14 +1,6 @@
 import { createContext, useContext, useState, useCallback } from "react";
 import useTasks from "../hooks/useTasks.js";
 
-/**
- * Combines task data (from useTasks) with the "is the form open, and
- * for what" state. Grouping these together is a pragmatic call for v1:
- * a stricter separation would split "data" and "modal UI state" into
- * two contexts, but every consumer of one currently needs the other
- * (e.g. Week/Calendar need both the task list AND openCreate), so one
- * provider keeps the wiring simple without real cost yet.
- */
 const TasksContext = createContext(null);
 
 export function TasksProvider({ children }) {
@@ -57,8 +49,6 @@ export function TasksProvider({ children }) {
 
 export function useTasksContext() {
   const ctx = useContext(TasksContext);
-  if (!ctx) {
-    throw new Error("useTasksContext must be used within a TasksProvider");
-  }
+  if (!ctx) throw new Error("useTasksContext must be used within a TasksProvider");
   return ctx;
 }
